@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'sha256-or2Wtz+pIXAGaUzdruQ3FARW35rUy+iYcc3g04Do/rw='; script-src 'sha256-k7ZHo12JiUmrjTExH9ZvFMBUZjXFGLVSSHmkc3VdKZU=' 'sha256-blRHQMYnTMPrOzAxku4ncf1Wt05qxN6NpU72FwVBZoo='; font-src data:; img-src data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'sha256-T5OJ5FtebiRE+75p3ydDC1q1aWbQelmGbnugt2p6d2I='; script-src 'sha256-k7ZHo12JiUmrjTExH9ZvFMBUZjXFGLVSSHmkc3VdKZU=' 'sha256-0BPchWSwAsULu0ME2g1PPMdAGXPGnalkaWlctJRIMUA='; font-src data:; img-src data:; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Abdel Majid Boukhlik Hajji, cybersécurité à Toulouse</title>
   <meta name="description" content="Alternant développeur full stack chez ITRUST, en Mastère Expert en solutions de cybersécurité (Bac+5) à l’Académie Cyber Occitanie. Je construis des applications, je les attaque, puis je corrige ce que j’ai trouvé.">
@@ -303,11 +303,33 @@ html:not(.js) .js-only { display: none; }
   .section { padding-block: 1.5rem; }
 }
 
+/* ---------- Animations reprises de la version précédente ---------- */
+/* Le côté vers lequel penche la couture se colore davantage (piloté par le script). */
+.pane::before { content: ''; position: absolute; inset: 0; pointer-events: none; }
+.pane-attack::before { background: var(--red-wash); opacity: var(--boost-l, 0); }
+.pane-defense::before { background: var(--blue-wash); opacity: var(--boost-r, 0); }
+/* Halo violet optique au milieu de la couture. */
+.seam-line { box-shadow: 0 0 24px 1px rgba(148, 113, 166, 0.35); }
+/* Écran tactile : la couture dérive lentement autour du centre. */
+@media (hover: none), (pointer: coarse) {
+  .hero { animation: seam-drift 12s ease-in-out infinite alternate; }
+}
+@keyframes seam-drift {
+  from { --seam-x: 44%; }
+  to   { --seam-x: 56%; }
+}
+/* Apparition au défilement (classe ajoutée par le script uniquement). */
+.reveal { opacity: 0; transform: translateY(12px); transition: opacity 500ms ease-out, transform 500ms ease-out; }
+.reveal.in { opacity: 1; transform: none; }
+@media print { .reveal { opacity: 1 !important; transform: none !important; } }
+
 /* ---------- Mouvement réduit ---------- */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   a, button { transition: none; }
   .tbtn:active, .btn:active { transform: none; }
+  .hero { animation: none !important; --seam-x: 50% !important; }
+  .reveal { opacity: 1; transform: none; transition: none; }
 }
 </style>
 </head>
@@ -740,6 +762,9 @@ html:not(.js) .js-only { display: none; }
       cur += (target - cur) * 0.1;
       if (Math.abs(target - cur) < 0.05) { cur = target; raf = 0; } else { raf = requestAnimationFrame(tick); }
       hero.style.setProperty('--seam-x', cur.toFixed(2) + '%');
+      var t = (cur - 50) / 22;
+      hero.style.setProperty('--boost-l', Math.max(0, -t).toFixed(3));
+      hero.style.setProperty('--boost-r', Math.max(0, t).toFixed(3));
     };
     var aim = function (v) { target = v; if (!raf) raf = requestAnimationFrame(tick); };
     hero.addEventListener('pointermove', function (e) {
@@ -749,6 +774,19 @@ html:not(.js) .js-only { display: none; }
       idle = setTimeout(function () { aim(50); }, 3000);
     });
     hero.addEventListener('pointerleave', function () { clearTimeout(idle); aim(50); });
+  }
+
+  /* ---------- Apparition au défilement (reprise de la version précédente) ---------- */
+  if ('IntersectionObserver' in window && !still.matches) {
+    var seen = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); seen.unobserve(e.target); }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.section h2, .section .lead, .entry, .levels, .rows').forEach(function (el) {
+      el.classList.add('reveal');
+      seen.observe(el);
+    });
   }
 })();
 </script>
